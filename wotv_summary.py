@@ -27,16 +27,21 @@ def fetch_recent_tweets():
             title = item.find('title').text if item.find('title') is not None else ""
             description = item.find('description').text if item.find('description') is not None else ""
             pubDate_str = item.find('pubDate').text if item.find('pubDate') is not None else ""
-            link_str = item.find('link').text if item.find('link') is not None else ""
+            link_elem = item.find('link')
+            link_str = link_elem.text if link_elem is not None and link_elem.text is not None else ""
             
-            # Convert Nitter link to X (Twitter) official link
-            x_link = link_str.replace("https://nitter.net", "https://x.com")
+            # Remove #m anchor if it exists
+            if link_str.endswith('#m'):
+                link_str = link_str[:-2]
+                
+            # Convert Nitter link to fxtwitter for Discord previews
+            fx_link = link_str.replace("https://nitter.net", "https://fxtwitter.com")
             
             # Simple exact text extraction (stripping HTML if any)
             text = re.sub('<[^<]+>', '', description).strip()
             
             # Combine text and link for Gemini context
-            context_text = f"{text}\n[URL: {x_link}]"
+            context_text = f"{text}\nURL: {fx_link}"
             
             # Nitter dates are like: Thu, 12 Oct 2023 18:00:00 GMT
             try:
@@ -75,7 +80,7 @@ def generate_summary(tweets):
 3. ガチャ（召喚）の更新情報や、環境（メタ）に影響を与えそうなユニット・ビジョンカードの情報を最優先で伝えること。
 4. 最後に必ず、「今回のガチャ（新戦力）を迎えるべきか」についての"王としての静かなる決断"を一言添えること。
 5. 締めくくりに「リオニスの血は絶やさぬ。たとえ神を敵にまわそうとも…」等の覚悟の言葉を入れること。
-6. 重要な報せ（新ユニットやイベントなど）には、情報元の公式Xリンク（ [URL: ...] で与えられたもの。nitterではなくx.comのもの）を「詳細はこちらを見てくれ。(URL)」のように添えること。
+6. 重要な報せ（新ユニットやイベントなど）がある場合は、文末に改行して情報元の公式リンク（ URL: https://fxtwitter... で与えられたもの ）を必ずそのまま貼り付けること。リンクはカッコやバッククォート(`)で絶対に囲まず、そのままのテキストとして出力してプレビューを表示させること。
 
 【最新情報】
 {chr(10).join(tweets)}
