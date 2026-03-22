@@ -27,20 +27,27 @@ def fetch_recent_tweets():
             title = item.find('title').text if item.find('title') is not None else ""
             description = item.find('description').text if item.find('description') is not None else ""
             pubDate_str = item.find('pubDate').text if item.find('pubDate') is not None else ""
+            link_str = item.find('link').text if item.find('link') is not None else ""
+            
+            # Convert Nitter link to X (Twitter) official link
+            x_link = link_str.replace("https://nitter.net", "https://x.com")
             
             # Simple exact text extraction (stripping HTML if any)
             text = re.sub('<[^<]+>', '', description).strip()
+            
+            # Combine text and link for Gemini context
+            context_text = f"{text}\n[URL: {x_link}]"
             
             # Nitter dates are like: Thu, 12 Oct 2023 18:00:00 GMT
             try:
                 # Convert to datetime
                 pubDate = datetime.strptime(pubDate_str, "%a, %d %b %Y %H:%M:%S %Z").replace(tzinfo=timezone.utc)
                 if now - pubDate < timedelta(days=7):
-                    tweets.append(text)
+                    tweets.append(context_text)
             except Exception as e:
                 # In case parsing fails, just append if we don't have too many
                 if len(tweets) < 10:
-                    tweets.append(text)
+                    tweets.append(context_text)
                     
         return tweets
     except Exception as e:
