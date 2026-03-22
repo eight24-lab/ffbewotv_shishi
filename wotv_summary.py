@@ -94,11 +94,14 @@ def send_discord_webhook(content):
     if not DISCORD_WEBHOOK_URL:
         print("Discord Webhook URL is not set. Skipping Discord notification.")
         return
+    MONT_ICON_URL = os.environ.get("MONT_ICON_URL")
         
     data = {
         "username": "英雄王モント",
         "content": content
     }
+    if MONT_ICON_URL:
+        data["avatar_url"] = MONT_ICON_URL
     
     try:
         response = requests.post(DISCORD_WEBHOOK_URL, json=data)
