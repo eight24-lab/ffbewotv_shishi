@@ -97,7 +97,7 @@ def send_discord_webhook(content):
     MONT_ICON_URL = os.environ.get("MONT_ICON_URL")
         
     data = {
-        "username": "英雄王モントからの金言",
+        "username": "英雄王モントbot",
         "content": content
     }
     if MONT_ICON_URL:
