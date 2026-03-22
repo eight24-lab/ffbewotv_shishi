@@ -67,9 +67,9 @@ def generate_summary(tweets):
 """
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        # Using gemini-1.5-flash as requested in the task list
+        # Using gemini-2.0-flash as 1.5-flash returns 404 with the new v1beta SDK
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.0-flash',
             contents=prompt,
         )
         return response.text
