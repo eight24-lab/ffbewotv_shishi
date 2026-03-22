@@ -119,24 +119,22 @@ if __name__ == "__main__":
     print("Fetching recent tweets from Nitter...")
     tweets = fetch_recent_tweets()
     
-    if tweets:
+    if not tweets:
+        print("No recent tweets found in the last 24 hours. Skipping Gemini step and Discord notification.")
+    else:
         print(f"Found {len(tweets)} recent tweets.")
-    else:
-        print("No recent tweets found or failed to fetch.")
         
-    # We still run summary even if empty to send the 'no new reports' message
-    if GEMINI_API_KEY:
-        print("Generating summary...")
-        summary = generate_summary(tweets)
-        print("========== Summary ==========")
-        print(summary)
-        print("=============================")
-        
-        print("Sending to Discord...")
-        send_discord_webhook(summary)
-    else:
-        print("GEMINI_API_KEY is not set. Skipping generation and notification for local test.")
-        if tweets:
+        if GEMINI_API_KEY:
+            print("Generating summary...")
+            summary = generate_summary(tweets)
+            print("========== Summary ==========")
+            print(summary)
+            print("=============================")
+            
+            print("Sending to Discord...")
+            send_discord_webhook(summary)
+        else:
+            print("GEMINI_API_KEY is not set. Skipping generation and notification for local test.")
             print("Preview of tweets to be sent to Gemini:")
             for t in tweets:
                 safe_text = t[:50].encode('cp932', errors='ignore').decode('cp932')
