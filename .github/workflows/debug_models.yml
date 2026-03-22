@@ -1,0 +1,20 @@
+name: Debug Gemini Models
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: pip install google-generativeai
+    - name: Run script
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        python -c "import os; import google.generativeai as genai; genai.configure(api_key=os.environ.get('GEMINI_API_KEY')); print([m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods])"
