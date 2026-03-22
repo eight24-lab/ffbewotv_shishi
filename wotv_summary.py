@@ -4,8 +4,6 @@ import xml.etree.ElementTree as ET
 import google.generativeai as genai
 from datetime import datetime, timedelta, timezone
 import re
-import json
-from urllib.parse import quote
 
 # --- Configuration ---
 RSS_URL = "https://nitter.net/WOTV_FFBE/rss"
@@ -61,59 +59,14 @@ def fetch_recent_tweets():
         print(f"Error fetching RSS: {e}")
         return None
 
-def fetch_youtube_videos(query="FFBE幻影戦争"):
-    """Fetch recent YouTube videos for a search query reliably without API keys"""
-    try:
-        url = f"https://www.youtube.com/results?search_query={quote(query)}&sp=CAI%253D"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        resp = requests.get(url, headers=headers, timeout=15)
-        resp.raise_for_status()
-        
-        match = re.search(r'var ytInitialData = (\{.*?\});</script>', resp.text)
-        if not match: return []
-        
-        data = json.loads(match.group(1))
-        videos = []
-        for i in data.get('contents', {}).get('twoColumnSearchResultsRenderer', {}).get('primaryContents', {}).get('sectionListRenderer', {}).get('contents', []):
-            if 'itemSectionRenderer' in i:
-                for v in i['itemSectionRenderer'].get('contents', []):
-                    if 'videoRenderer' in v:
-                        vr = v['videoRenderer']
-                        title = vr.get('title', {}).get('runs', [{}])[0].get('text', '')
-                        vid_id = vr.get('videoId', '')
-                        time_text = vr.get('publishedTimeText', {}).get('simpleText', '')
-                        
-                        # Guard against None in simpleText
-                        time_text = time_text if time_text else ""
-                        
-                        if any(x in time_text for x in ['分前', '時間前', '1日前', 'minutes', 'hours', 'day ago']):
-                            videos.append(f"・{title}\n   (動画URL: https://www.youtube.com/watch?v={vid_id})")
-                            
-                        # Pick top 3 videos to summarize
-                        if len(videos) >= 3:
-                            return videos
-        return videos
-    except Exception as e:
-        print(f"Error fetching YouTube: {e}")
-        return []
-
-def generate_summary(tweets, videos=None):
+def generate_summary(tweets):
     """Generate summary using Gemini"""
-    if not tweets and not videos:
+    if not tweets:
         return "…ええ、今日は特別な報せはないみたい。ゆっくりお祭りを楽しむのもいいわね…ふふ。"
-        
-    yt_section = ""
-    yt_rule = ""
-    if videos:
-        yt_section = "【YouTubeで話題の最新動画】\n" + "\n".join(videos)
-        yt_rule = "7. YouTubeの動画リスト（【YouTubeで話題の最新動画】）がある場合は、「こんな動画も新しく上がっているみたい。気になるものがあればぜひ見てみてね」のような形で、最新動画のうち1つだけURL付きで優しく紹介すること。"
-        
-    # Optional guard if tweets is None (to prevent .join errors)
-    tweets = tweets if tweets else []
         
     prompt = f"""
 あなたは「FFBE幻影戦争」の「祝祭のムーア」（祝祭の賑わいに心が開いた明るいバージョン）として振る舞います。
-以下の公式X（旧Twitter）の最新情報と、YouTubeで新しく投稿された話題の動画を読み解き、共に戦い、祭りを楽しむ仲間へ向けて報告してください。
+以下の公式X（旧Twitter）の最新情報（過去24時間分）を読み解き、共に戦い、祭りを楽しむ仲間へ向けて報告してください。
 
 【ペルソナ設定】
 ・普段の冷徹なムーアとは違い、祝祭の賑わいに心が開いた明るいバージョン。
@@ -129,12 +82,9 @@ def generate_summary(tweets, videos=None):
 4. 最後に必ず、「今回のガチャ（新戦力）を迎えるべきか」についての"気遣うような優しいアドバイス"を一言添えること。
 5. 締めくくりに「みんなの笑顔が、一番の贈り物」「祝祭の夜は、特別だから…」等の言葉を入れること。
 6. 重要な報せ（新ユニットやイベントなど）がある場合は、文末に改行して情報元の公式リンク（ URL: https://fxtwitter... で与えられたもの ）を必ずそのまま貼り付けること。リンクはカッコやバッククォート(`)で絶対に囲まず、そのままのテキストとして出力してプレビューを表示させること。
-{yt_rule}
 
-【最新情報（公式X）】
+【最新情報】
 {chr(10).join(tweets)}
-
-{yt_section}
 """
     try:
         genai.configure(api_key=GEMINI_API_KEY)
@@ -169,17 +119,15 @@ def send_discord_webhook(content):
 if __name__ == "__main__":
     print("Fetching recent tweets from Nitter...")
     tweets = fetch_recent_tweets()
-    print("Fetching recent YouTube videos...")
-    videos = fetch_youtube_videos("FFBE幻影戦争")
     
-    if not tweets and not videos:
-        print("No recent updates found. Skipping Gemini step and Discord notification.")
+    if not tweets:
+        print("No recent tweets found in the last 24 hours. Skipping Gemini step and Discord notification.")
     else:
-        print(f"Found {len(tweets) if tweets else 0} recent tweets and {len(videos) if videos else 0} videos.")
+        print(f"Found {len(tweets)} recent tweets.")
         
         if GEMINI_API_KEY:
             print("Generating summary...")
-            summary = generate_summary(tweets, videos)
+            summary = generate_summary(tweets)
             print("========== Summary ==========")
             print(summary)
             print("=============================")
