@@ -1,7 +1,7 @@
 import os
 import requests
 import xml.etree.ElementTree as ET
-from google import genai
+import google.generativeai as genai
 from datetime import datetime, timedelta, timezone
 import re
 
@@ -66,12 +66,9 @@ def generate_summary(tweets):
 {chr(10).join(tweets)}
 """
     try:
-        client = genai.Client(api_key=GEMINI_API_KEY)
-        # Using gemini-2.0-flash as 1.5-flash returns 404 with the new v1beta SDK
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=prompt,
-        )
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         print(f"Error generating summary: {e}")
