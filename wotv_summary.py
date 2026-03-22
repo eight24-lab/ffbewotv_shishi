@@ -82,12 +82,13 @@ def fetch_youtube_videos(query="FFBE幻影戦争"):
                         title = vr.get('title', {}).get('runs', [{}])[0].get('text', '')
                         vid_id = vr.get('videoId', '')
                         time_text = vr.get('publishedTimeText', {}).get('simpleText', '')
+                        channel = vr.get('longBylineText', {}).get('runs', [{}])[0].get('text', '不明な投稿者')
                         
                         # Guard against None in simpleText
                         time_text = time_text if time_text else ""
                         
                         if any(x in time_text for x in ['分前', '時間前', '1日前', 'minutes', 'hours', 'day ago']):
-                            videos.append(f"・{title}\n   (動画URL: https://www.youtube.com/watch?v={vid_id})")
+                            videos.append(f"・{title} 【投稿者: {channel}】\n   (動画URL: https://www.youtube.com/watch?v={vid_id})")
                             
                         # Pick top 3 videos to summarize
                         if len(videos) >= 3:
