@@ -45,8 +45,9 @@ def fetch_recent_tweets():
             
             # Nitter dates are like: Thu, 12 Oct 2023 18:00:00 GMT
             try:
+                # Convert to datetime
                 pubDate = datetime.strptime(pubDate_str, "%a, %d %b %Y %H:%M:%S %Z").replace(tzinfo=timezone.utc)
-                if now - pubDate < timedelta(days=7):
+                if now - pubDate < timedelta(days=1):
                     tweets.append(context_text)
             except Exception as e:
                 # In case parsing fails, just append if we don't have too many
@@ -102,7 +103,7 @@ def send_discord_webhook(content):
     MONT_ICON_URL = os.environ.get("MONT_ICON_URL")
         
     data = {
-        "username": "祝祭のムーアbot",
+        "username": "祝祭のムーア",
         "content": content
     }
     if MONT_ICON_URL:
