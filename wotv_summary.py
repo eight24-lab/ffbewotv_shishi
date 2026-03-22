@@ -47,9 +47,8 @@ def fetch_recent_tweets():
             
             # Nitter dates are like: Thu, 12 Oct 2023 18:00:00 GMT
             try:
-                # Convert to datetime
                 pubDate = datetime.strptime(pubDate_str, "%a, %d %b %Y %H:%M:%S %Z").replace(tzinfo=timezone.utc)
-                if now - pubDate < timedelta(days=1):
+                if now - pubDate < timedelta(days=7):
                     tweets.append(context_text)
             except Exception as e:
                 # In case parsing fails, just append if we don't have too many
