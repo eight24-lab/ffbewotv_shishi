@@ -2,8 +2,8 @@ name: WOTV News Analyzer
 
 on:
   schedule:
-    # 毎日16:00 JST -> 07:00 UTC (お知らせが更新されることが多い時間帯を狙う)
-    - cron: '0 7 * * *'
+    # 毎日18:00 JST -> 09:00 UTC (ムーアボットと同じ時間に合わせてチェックする)
+    - cron: '0 9 * * *'
   push:
     paths:
       - '.github/workflows/news_analyzer.yml'
