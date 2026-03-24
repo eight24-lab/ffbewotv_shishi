@@ -22,14 +22,11 @@ def get_current_phase():
     """実行時刻(JST)から現在のフェーズを判定する"""
     now_jst = datetime.now(timezone.utc) + timedelta(hours=9)
     hour = now_jst.hour
-    minute = now_jst.minute
 
-    if 6 <= hour < 14:
-        return "morning", "本日の相手が決定した頃合い。今日の作戦や敵の確認を促し、士気を高める号令を簡潔（2〜3行）でかけてください。"
-    elif 14 <= hour < 21:
-        return "evening", "夕暮れ時。すでに戦果を挙げた者を労いつつ、まだ出陣していない者へ夜に向けての準備と出撃を促す言葉を簡潔（2〜3行）でかけてください。"
+    if 6 <= hour < 20:
+        return "testing", "ギルドバトルのテスト通信。出陣に向けた号令を適当にかけてください。"
     else:
-        return "night", "ギルバト終了直前（夜型）。残り時間は少ないため、まだ攻撃を残している者へ急ぎ出撃するよう、少し語気を強めて最終通告（2〜3行）を行ってください。最後には勝利を信じる一言を添えてください。"
+        return "night", "夜21時のギルバトのリマインド。まだ戦果を挙げていない者、あるいは攻撃を残している者へ、気合を入れる号令（2〜3行）を行ってください。最後には精鋭たる獅子たちへの激励を添えてください。"
 
 def generate_remind_message(phase_instruction):
     prompt = f"""
