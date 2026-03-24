@@ -30,6 +30,6 @@ jobs:
     - name: Run Trend Search Script
       env:
         SOCIALDATA_API_KEY: ${{ secrets.SOCIALDATA_API_KEY }}
-        # 送信先はイルディラ用と同じWebhookを使用します
-        ILDYRA_WEBHOOK_URL: ${{ secrets.ILDYRA_WEBHOOK_URL }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        TREND_WEBHOOK_URL: ${{ secrets.TREND_WEBHOOK_URL }}
       run: python wotv_trend_search.py
