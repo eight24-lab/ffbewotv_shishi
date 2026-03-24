@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 
 # --- Configuration ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+ILDYRA_WEBHOOK_URL = os.environ.get("ILDYRA_WEBHOOK_URL")
 STATE_FILE = "analyzed_news_urls.json"
 
 PERSONA_PROMPT = """
@@ -106,7 +106,7 @@ def generate_analysis(title, content):
         return None
 
 def send_discord_webhook(title, url, text_content):
-    if not DISCORD_WEBHOOK_URL:
+    if not ILDYRA_WEBHOOK_URL:
         print("Discord Webhook URL is not set. Skipping.")
         return
     
@@ -119,7 +119,7 @@ def send_discord_webhook(title, url, text_content):
     }
     
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response = requests.post(ILDYRA_WEBHOOK_URL, json=data)
         response.raise_for_status()
         print(f"Successfully sent analysis for: {title}")
     except Exception as e:

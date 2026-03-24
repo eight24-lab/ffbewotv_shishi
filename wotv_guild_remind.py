@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 
 # --- Configuration ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+GUILD_REMIND_WEBHOOK_URL = os.environ.get("GUILD_REMIND_WEBHOOK_URL")
 
 def get_persona(day):
     if day % 2 == 0:
@@ -61,7 +61,7 @@ def generate_remind_message(persona_prompt, phase_instruction):
         return "……通信が途絶えたようだな。だが案ずるな、各々、己のなすべき戦いを全うせよ！⚔️"
 
 def send_discord_webhook(content, username="王妃マシュリー"):
-    if not DISCORD_WEBHOOK_URL:
+    if not GUILD_REMIND_WEBHOOK_URL:
         print("Discord Webhook URL is not set. Skipping.")
         return
     
@@ -71,7 +71,7 @@ def send_discord_webhook(content, username="王妃マシュリー"):
     }
     
     try:
-        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response = requests.post(GUILD_REMIND_WEBHOOK_URL, json=data)
         response.raise_for_status()
         print("Successfully sent to Discord.")
     except Exception as e:

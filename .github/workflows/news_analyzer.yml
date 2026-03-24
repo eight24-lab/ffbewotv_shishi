@@ -30,7 +30,7 @@ jobs:
     - name: Run News Info Analyzer Script
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        ILDYRA_WEBHOOK_URL: ${{ secrets.ILDYRA_WEBHOOK_URL }}
       run: python wotv_news_analyzer.py
       
     - name: Commit state
