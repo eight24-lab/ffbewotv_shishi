@@ -1,0 +1,35 @@
+name: WOTV Daily Trend Report
+
+on:
+  schedule:
+    # 毎日お昼の12:00 JST -> 03:00 UTC に日次トレンドを配信する
+    - cron: '0 3 * * *'
+  push:
+    paths:
+      - '.github/workflows/trend_search.yml'
+  workflow_dispatch: # 手動実行用
+
+jobs:
+  run-trends:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        
+    - name: Run Trend Search Script
+      env:
+        SOCIALDATA_API_KEY: ${{ secrets.SOCIALDATA_API_KEY }}
+        # 送信先はイルディラ用と同じWebhookを使用します
+        ILDYRA_WEBHOOK_URL: ${{ secrets.ILDYRA_WEBHOOK_URL }}
+      run: python wotv_trend_search.py
