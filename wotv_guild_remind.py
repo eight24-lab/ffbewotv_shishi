@@ -64,6 +64,12 @@ def send_discord_webhook(content, username="王妃マシュリー"):
         print(f"Error sending to Discord: {e}")
 
 if __name__ == "__main__":
+    import sys
+    now_jst = datetime.now(timezone.utc) + timedelta(hours=9)
+    if now_jst.day in (1, 2):
+        print(f"Today is day {now_jst.day}. Guild battle is on break. Skipping reminder.")
+        sys.exit(0)
+
     phase_name, phase_instruction = get_current_phase()
     print(f"Current Phase: {phase_name}")
     
