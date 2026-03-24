@@ -1,0 +1,41 @@
+name: WOTV News Analyzer
+
+on:
+  schedule:
+    # 毎日16:00 JST -> 07:00 UTC (お知らせが更新されることが多い時間帯を狙う)
+    - cron: '0 7 * * *'
+  push:
+    paths:
+      - '.github/workflows/news_analyzer.yml'
+  workflow_dispatch: # 手動実行用
+
+jobs:
+  run-analyzer:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests beautifulsoup4 google-generativeai
+        
+    - name: Run News Info Analyzer Script
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      run: python wotv_news_analyzer.py
+      
+    - name: Commit state
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add analyzed_news_urls.json || echo "No state file to add"
+        git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update analyzed news list" && git push)
