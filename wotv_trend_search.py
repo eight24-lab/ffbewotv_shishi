@@ -23,13 +23,16 @@ PERSONA_PROMPT = """
 ・戦う時は冷静だが、仲間や主君を守るためなら命を懸ける覚悟がある。
 """
 
-def fetch_popular_tweets():
+def fetch_popular_tweets(days_back=1):
     if not SOCIALDATA_API_KEY:
         print("SOCIALDATA_API_KEY is not set.")
         return []
         
-    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime('%Y-%m-%d')
-    query = f"幻影戦争 min_faves:10 -filter:replies since:{yesterday}"
+    # JST基準で現在時刻から days_back 日前を起算日とする
+    jst_now = datetime.now(timezone.utc) + timedelta(hours=9)
+    since_date = (jst_now - timedelta(days=days_back)).strftime('%Y-%m-%d')
+    
+    query = f"幻影戦争 min_faves:10 -filter:replies since:{since_date}"
     
     url = f"https://api.socialdata.tools/twitter/search?query={quote(query)}"
     headers = {
@@ -49,19 +52,25 @@ def fetch_popular_tweets():
         print(f"Error fetching from SocialData: {e}")
         return []
 
-def generate_kitone_intro(tweets_text_list):
+def generate_kitone_intro(tweets_text_list, trend_type="daily"):
     """Geminiを使ってリストのトレンドに対するキトンの一言イントロを作成する"""
+    time_label = "過去24時間"
+    if trend_type == "weekly":
+        time_label = "過去1週間"
+    elif trend_type == "monthly":
+        time_label = "過去1ヶ月"
+
     if not GEMINI_API_KEY:
-        return "……モント様、皆さん。過去24時間の『幻影戦争』の情報を集めてきました。お役に立てば嬉しいです……。"
+        return f"……モント様、皆さん。{time_label}の『幻影戦争』の情報を集めてきました。お役に立てば嬉しいです……。"
         
     tweets_summary = "\n".join(tweets_text_list)
     prompt = f"""
 {PERSONA_PROMPT}
 
 【今回の任務】
-シノビとして、過去24時間の「幻影戦争」の情報を集めてきました。
-以下のトレンドの話題を見て、ギルドメンバー（やモント様）に向けた「今日のSNSの話題に関する報告の前置き（所感や挨拶）」を2〜3行程度で話してください。
-※URLの紹介などはこの後システムが自動で行うので、ここでは純粋な挨拶と、今日の話題に関する一言コメントのみをお願いします。
+シノビとして、{time_label}の「幻影戦争」の情報を集めてきました。
+以下のトレンドの話題を見て、ギルドメンバー（やモント様）に向けた「最近のSNSの話題に関する報告の前置き（所感や挨拶）」を2〜3行程度で話してください。
+※URLの紹介などはこの後システムが自動で行うので、ここでは純粋な挨拶と、話題に関する一言コメントのみをお願いします。
 
 【トレンドの内容抜粋】
 {tweets_summary}
@@ -75,7 +84,7 @@ def generate_kitone_intro(tweets_text_list):
         print(f"Error generating intro: {e}")
         return "……モント様。シノビの務めとして、今日の情報をまとめました。少しでもお力になれれば……。"
 
-def format_trend_report(tweets):
+def format_trend_report(tweets, trend_type="daily"):
     """上位10件のツイートをキトンの挨拶付きでDiscord向けに整形する"""
     if not tweets:
         return "……今日は、特にご報告するような情報はありませんでした。あたしは…引き続き、護衛に戻ります。"
@@ -87,9 +96,15 @@ def format_trend_report(tweets):
         if t_text:
             tweets_text_list.append(t_text[:50]) # 上位の話のさわりだけ教える
             
-    header_text = generate_kitone_intro(tweets_text_list)
+    header_text = generate_kitone_intro(tweets_text_list, trend_type)
     
-    text = f"{header_text}\n\n**【本日の密偵報告：トップ10】**\n"
+    title_label = "本日の密偵報告"
+    if trend_type == "weekly":
+        title_label = "今週の密偵報告（週間まとめ）"
+    elif trend_type == "monthly":
+        title_label = "今月の密偵報告（月間まとめ）"
+        
+    text = f"{header_text}\n\n**【{title_label}：トップ10】**\n"
     
     for i, t in enumerate(tweets):
         screen_name = t.get('user', {}).get('screen_name', 'unknown')
@@ -125,11 +140,32 @@ def send_discord_webhook(content, username=PERSONA_NAME):
 
 if __name__ == "__main__":
     print("Fetching trend data via SocialData...")
-    popular_tweets = fetch_popular_tweets()
+    
+    # 期間判定ロジック
+    now_jst = datetime.now(timezone.utc) + timedelta(hours=9)
+    tomorrow_jst = now_jst + timedelta(days=1)
+    
+    trend_type = "daily"
+    days_back = 1
+    
+    if tomorrow_jst.day == 1:
+        # 翌日が1日 = 今日は月末
+        trend_type = "monthly"
+        days_back = 30
+        print("Today is the last day of the month. Running monthly trend report.")
+    elif now_jst.weekday() == 5:
+        # 曜日が5 = 土曜日
+        trend_type = "weekly"
+        days_back = 7
+        print("Today is Saturday. Running weekly trend report.")
+    else:
+        print("Running standard daily trend report.")
+        
+    popular_tweets = fetch_popular_tweets(days_back)
     
     if popular_tweets:
         print(f"Found {len(popular_tweets)} popular tweets.")
-        report = format_trend_report(popular_tweets)
+        report = format_trend_report(popular_tweets, trend_type)
         
         safe_report = report.encode('cp932', errors='ignore').decode('cp932')
         print("========== Report ==========")
